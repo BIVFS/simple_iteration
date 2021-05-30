@@ -109,24 +109,20 @@ bool Calculator::Input()
      //TODO
      std::stringstream ss;
      ss
+          //<< "7x1+10.5x2-3x3+4x4=15" << std::endl // должна быть такая исходня строка, но она ломает код, поэтому
+          //введена эквивалентная преобразованная
           << "6.75x1+7x2+16x3=-4.1825" << std::endl
-          //<< "7x1+10.5x2-3x3+4x4=15" << std::endl
           << "8x1-13x2+x3=8.33" << std::endl
           << "10x1+2.5x2-4x3=20" << std::endl
           << "2x1+0.1x3-7x4=-13.23" << std::endl
-#if 0
-          << "x1+9x2+3x3=7" << std::endl
-          << "3x1+7x3=9" << std::endl
-          << "5x2+x3=1" << std::endl
-#endif
           ;
      std::string equation;
      std::cout << "Enter the first equation in the format: A1X1 + A2X2 + A3X3 + ... + AnXn = C" << std::endl;
      while( true )
      {
           //TODO
-          //getline( std::cin, equation );
-          getline( ss, equation );
+          getline( std::cin, equation );
+          //getline( ss, equation );    // Отладка
           if( equation.empty() )
           {
                break;
@@ -137,11 +133,17 @@ bool Calculator::Input()
           FindAllConst( equation );
           std::cout << "Enter the next equation or press <Enter> to end" << std::endl;
      }
+
+     return true;
+}
+
+void Calculator::PrepareData()
+{
      AddNullRoots();
-     ShowEquations();
+     //ShowEquations();
      PrepareSystem();
-     std::cout << std::endl;
-     ShowSystem();
+     //std::cout << std::endl;
+     //ShowSystem();
 
      TransformSystem();
 
@@ -149,12 +151,8 @@ bool Calculator::Input()
      ShowSystem();
 
      DivisionSystem();
-     std::cout << std::endl;
-     ShowSystem();
-
-     Calc();
-
-     return true;
+     //std::cout << std::endl;
+     //ShowSystem();
 }
 
 void Calculator::ShowEquation( const size_t& n )
@@ -307,10 +305,10 @@ void Calculator::FindAllConst( const std::string& equation )
           posBegin = posEnd + 1;
      }
 
-     AddNullRoots( consts_.size() - 1 );
+     SortAndAddNullRoots( consts_.size() - 1 );
 }
 
-void Calculator::AddNullRoots( const size_t& n )
+void Calculator::SortAndAddNullRoots( const size_t& n )
 {
      for( size_t i = 1; i < consts_[n].size(); ++i )
      {
@@ -386,63 +384,6 @@ void Calculator::PrepareSystem()
      }
 }
 
-void Calculator::Transformation()
-{
-     size_t maxNull = 0;
-     size_t shortest = 0;
-     for( size_t i = 0; i < consts_.size(); ++i )
-     {
-          size_t countNull = 0;
-          for( size_t j = 0; j < consts_[i].size(); ++ j )
-          {
-               if( 0 == consts_[i][j].second )
-               {
-                    ++countNull;
-               }
-          }
-          if( maxNull < countNull )
-          {
-               maxNull = countNull;
-               shortest = i;
-          }
-     }
-          float summ = CalcSum( *system_[i], i );
-#if 0
-          for( size_t j = 1; j < system_[i]->size(); ++j )
-          {
-               if( j != i )
-               {
-                    summ += std::fabs( system_[i]->at( j ).second );
-               }
-          }
-#endif
-          if( std::fabs( system_[i]->at( i + 1 ).second ) >= summ )
-          {
-               continue;
-          }
-          do
-          {
-               int aim = 0;
-               std::cout << std::endl << i << std::endl;
-               std::cout << system_[i]->at( i + 1 ).second << " " << summ << std::endl;
-               bool positive = FindFor( i, aim );
-               std::cout << "Find: " << aim << std::endl;
-               if( positive )
-               {
-                    AdditionEquations( *system_[i], *system_[ std::abs( aim ) ] ).swap( *system_[i] );
-               }
-               else
-               {
-                    SubtractionEquations( *system_[i], *system_[ std::abs( aim ) ] ).swap( *system_[i] );
-               }
-               ShowEquation( *system_[i] );
-               summ = CalcSum( *system_[i], i );
-               std::cout << system_[i]->at( i + 1 ).second << " " << summ << std::endl;
-               std::this_thread::sleep_for( std::chrono::seconds( 1 ) );
-          } while( std::fabs( system_[i]->at( i + 1 ).second ) < summ );
-     }
-}
-
 void Calculator::TransformSystem()
 {
      for( size_t i = 0; i < system_.size(); ++i )
@@ -484,86 +425,6 @@ void Calculator::TransformSystem()
      }
 }
 
-void Calculator::Fix( const size_t& n )
-{
-     int maxElement = -1;
-     for( size_t j = 1; j < system_.size(); ++j )
-     {
-          if( n + 1 == j )
-          {
-               continue;
-          }
-          if( 0 > maxElement || system_[n]->at( j ) > system_[n]->at( maxElement ) )
-          {
-               maxElement = j;
-          }
-     }
-     if( 0 > maxElement )
-     {
-          throw;
-     }
-     for( size_t j = 1; j < system_.size(); ++j )
-     {
-          if( n + 1 == j )
-          {
-               continue;
-          }
-          system_[n]->at( j )
-     }
-}
-
-#if 0
-void Calculator::Fix( const size_t& n )
-{
-     size_t maxNulls = 0;
-     int index = -1;
-     for( size_t i = 0; i < system_.size(); ++i )
-     {
-          if( n == i )
-          {
-               continue;
-          }
-          size_t nulls = 0;
-          for( size_t j = 1; j < system_[i]->size(); ++j )
-          {
-               if( 0 == system_[n]->at( j ).second && 0 != system_[i]->at( j ).second )
-               {
-                    // Чтобы не тащить лишние корни в уравнение
-                    nulls = 0;
-                    break;
-               }
-               if( 0 != system_[n]->at( n + 1 ).second && 0 == system_[i]->at( j ).second )
-               {
-                    ++nulls;
-               }
-          }
-          if( maxNulls < nulls )
-          {
-               maxNulls = nulls;
-               index = i;
-          }
-     }
-     if( index < 0 )
-     {
-          throw;
-     }
-     size_t maxElement = ( 1 == n + 1 ) ? 2 : 1;
-     for( size_t j = 1; j < system_[n]->size(); ++j )
-     {
-          if( n + 1 == j )
-          {
-               continue;
-          }
-          if( 0 != system_[n]->at( j ).second && std::fabs( system_[index]->at( j ).second ) > system_[index]->at( maxElement ).second )
-          {
-          }
-          for( size_t j = 1; j < system_[i]->size(); ++j )
-          {
-          }
-     }
-}
-#endif
-
 bool Calculator::FindFor( size_t n, int& num )
 {
      for( size_t i = 0; i < system_.size(); ++i )
@@ -603,9 +464,7 @@ void Calculator::DivisionSystem()
                }
                else if( 0 != system_[i]->at( j ).second )
                {
-                    std::cout << system_[i]->at( j ).second << " " << system_[i]->at( i + 1 ).second << " ";
                     system_[i]->at( j ).second = ( system_[i]->at( j ).second / system_[i]->at( i + 1 ).second );
-                    std::cout << system_[i]->at( j ).second << std::endl;
                }
                if( 0 != j )
                {
@@ -615,9 +474,10 @@ void Calculator::DivisionSystem()
           system_[i]->at( i + 1 ).second = 1;
      }
 
-     roots_.resize( system_.size(), std::make_pair( 0, 0 ) );
+     roots_.resize( system_.size(), std::make_pair( 0, std::make_pair( 0, 0 ) ) );
      for( size_t i = 0; i < roots_.size(); ++i )
      {
+          roots_[i].first = i + 1;
           NewRoot( i ) = system_[i]->at( 0 ).second;
      }
 }
@@ -627,7 +487,6 @@ void Calculator::Calc()
      size_t n = 0;
      do
      {
-          std::cout << n << std::endl;
           ++n;
           for( size_t i = 0; i < system_.size(); ++i )
           {
@@ -643,9 +502,29 @@ void Calculator::Calc()
           }
      } while( !CheckAccuracy() );
 
-     for( const auto& i : roots_ )
+     std::vector<std::pair< size_t, std::pair<float, float> > > tmpRoots = roots_;
+     std::vector<std::pair<size_t, float> > outRoots;
+     std::pair<size_t, float> tmp;
+     while( !tmpRoots.empty() )
      {
-          std::cout << i.first << " " << i.second << std::endl;
+          tmp = std::make_pair( 0, 0 );
+          size_t index = 0;
+          for( size_t i = 0; i < tmpRoots.size(); ++i )
+          {
+               if(  std::fabs( NewRoot( i ) ) > tmp.second )
+               {
+                    tmp = tmpRoots[i].second;
+                    index = tmpRoots[i].first;
+                    tmpRoots.erase( tmpRoots.begin() + i );
+               }
+          }
+          outRoots.emplace_back( std::make_pair( index, tmp.second ) );
+     }
+     std::cout << "Number of iterations: " << n << std::endl;
+
+     for( int i = outRoots.size() - 1; i >= 0; --i )
+     {
+          std::cout << "x" << outRoots[i].first << " = " << outRoots[i].second << std::endl;
      }
 }
 

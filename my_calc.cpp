@@ -109,11 +109,11 @@ bool Calculator::Input()
      //TODO
      std::stringstream ss;
      ss
-          //<< "7x1+10.5x2-3x3+4x4=15" << std::endl // должна быть такая исходня строка, но она ломает код, поэтому
-          //введена эквивалентная преобразованная
-          << "6.75x1+7x2+16x3=-4.1825" << std::endl
-          << "8x1-13x2+x3=8.33" << std::endl
           << "10x1+2.5x2-4x3=20" << std::endl
+          << "8x1-13x2+x3=8.33" << std::endl
+          << "7x1+10.5x2-3x3+4x4=15" << std::endl // должна быть такая исходня строка, но она ломает код, поэтому
+          //введена эквивалентная преобразованная
+          //<< "6.75x1+7x2+16x3=-4.1825" << std::endl
           << "2x1+0.1x3-7x4=-13.23" << std::endl
           ;
      std::string equation;
@@ -121,8 +121,8 @@ bool Calculator::Input()
      while( true )
      {
           //TODO
-          getline( std::cin, equation );
-          //getline( ss, equation );    // Отладка
+          //getline( std::cin, equation );
+          getline( ss, equation );    // Отладка
           if( equation.empty() )
           {
                break;
@@ -140,19 +140,21 @@ bool Calculator::Input()
 void Calculator::PrepareData()
 {
      AddNullRoots();
-     //ShowEquations();
      PrepareSystem();
-     //std::cout << std::endl;
-     //ShowSystem();
+
+     std::cout << "Source system" << std::endl;
+     ShowSystem();
 
      TransformSystem();
 
-     std::cout << std::endl;
-     ShowSystem();
-
-     DivisionSystem();
      //std::cout << std::endl;
      //ShowSystem();
+
+     DivisionSystem();
+     std::cout << std::endl;
+     std::cout << "Normalized system" << std::endl;
+     ShowSystem();
+     std::cout << std::endl;
 }
 
 void Calculator::ShowEquation( const size_t& n )
@@ -389,6 +391,148 @@ void Calculator::TransformSystem()
      for( size_t i = 0; i < system_.size(); ++i )
      {
           float summ = CalcSum( *system_[i], i );
+          if( std::fabs( system_[i]->at( i + 1 ).second ) >= summ )
+          {
+               continue;
+          }
+          if( !TryFixOnePass( *system_[i], i ) )
+          {
+               DutySwap( i );
+          }
+     }
+
+     for( size_t i = 0; i < system_.size(); ++i )
+     {
+          float summ = CalcSum( *system_[i], i );
+          if( std::fabs( system_[i]->at( i + 1 ).second ) < summ )
+          {
+               // Не удалось привести систему уравнений к нормальному виду, разрешив ее относительно диагональных неизвестных
+               throw std::logic_error( "Transform system failed" );
+          }
+     }
+}
+
+bool Calculator::TryFixOnePass( std::vector<std::pair<size_t, float> > equation, size_t i )
+{
+     float maxVar = 0;
+     size_t index = 0;
+     for( size_t j = 1; j < equation.size(); ++j )
+     {
+          if( i + 1 == j )
+          {
+               continue;
+          }
+          if( std::fabs( equation[j].second ) > std::fabs( maxVar ) )
+          {
+               index = j;
+               maxVar = equation[j].second;
+          }
+     }
+     double aimVar = equation[index].second;
+     if( 0 == index )
+     {
+          // Не нашли наибольший элемент по модулю, не считая элемент главной диагонали
+          throw std::logic_error( "Can not find max element" );
+     }
+
+     for( size_t j = 0; j < equation.size(); ++j )
+     {
+          if( i + 1 == index )
+          {
+               continue;
+          }
+          equation[j].second = equation[j].second
+               - system_[index - 1]->at( j ).second * aimVar / system_[index - 1]->at( index ).second;
+     }
+
+     // Проверка условия диагоналя для текущего уравнения
+     float summ = CalcSum( equation, i );
+     if( std::fabs( equation[i + 1].second ) >= summ )
+     {
+          system_[i]->swap( equation );
+          return true;
+     }
+     else
+     {
+          return false;
+     }
+}
+
+void Calculator::DutySwap( const size_t n )
+{
+     std::vector<std::vector<std::pair<size_t, float> > > system( system_.size() );
+     for( size_t i = 0; i < system.size(); ++i )
+     {
+          system[i] = *system_[i];
+     }
+     for( size_t k = 0; k < system_.size(); ++k )
+     {
+          for( size_t i = 0; i < system.size(); ++i )
+          {
+               double aimVar = system[i][k + 1].second;
+               if( 0 == system[i][k + 1].second )
+               {
+                    continue;
+               }
+               for( size_t j = 0; j < system[i].size(); ++j )
+               {
+                    if( i == k )
+                    {
+                         continue;
+                    }
+                    system[i][j].second = system[i][j].second - system[k][j].second * aimVar / system[k][k + 1].second;
+               }
+          }
+     }
+     system_[n]->swap( system[n] );
+}
+
+#if 0
+void Calculator::TransformSystem()
+{
+     for( size_t k = 0; k < system_.size(); ++k )
+     {
+          //TODO матрица квадратная, поэтому 0, но по хорошему опираться на конкретный
+          for( size_t i = 0; i < system_.size(); ++i )
+          {
+               double aimVar = system_[i]->at( k + 1 ).second;
+               if( 0 == system_[i]->at( k + 1 ).second )
+               {
+                    continue;
+               }
+               for( size_t j = 0; j < system_[i]->size(); ++j )
+               {
+                    if( i == k )
+                    {
+                         continue;
+                    }
+                    //std::cout << i << " " << k << " Xs " << system_[i]->at( k + 1 ).second << " " << system_[k]->at( k + 1 ).second << std::endl;
+                    //std::cout << "Old: " << system_[i]->at( j ).second << std::endl;
+                    if( 0 > aimVar && 0 > system_[k]->at( k + 1 ).second ) // 0 > aimVar * system_[k]->at( k + 1 ).second )
+                    {
+                         system_[i]->at( j ).second = system_[i]->at( j ).second
+                              + system_[k]->at( j ).second * aimVar / system_[k]->at( k + 1 ).second;
+                    }
+                    else
+                    {
+                         system_[i]->at( j ).second = system_[i]->at( j ).second
+                              - system_[k]->at( j ).second * aimVar / system_[k]->at( k + 1 ).second;
+                    }
+                    //std::cout << "New: " << system_[i]->at( j ).second << std::endl;
+               }
+          }
+          ShowSystem();
+          std::cout << std::endl;
+     }
+}
+#endif
+
+#if 0
+void Calculator::TransformSystem()
+{
+     for( size_t i = 0; i < system_.size(); ++i )
+     {
+          float summ = CalcSum( *system_[i], i );
 #if 0
           for( size_t j = 1; j < system_[i]->size(); ++j )
           {
@@ -424,6 +568,7 @@ void Calculator::TransformSystem()
           } while( std::fabs( system_[i]->at( i + 1 ).second ) < summ );
      }
 }
+#endif
 
 bool Calculator::FindFor( size_t n, int& num )
 {
@@ -480,6 +625,16 @@ void Calculator::DivisionSystem()
           roots_[i].first = i + 1;
           NewRoot( i ) = system_[i]->at( 0 ).second;
      }
+
+     for( size_t i = 0; i < system_.size(); ++i )
+     {
+          float summ = CalcSum( *system_[i], i );
+          if( 1 < summ )
+          {
+               // Условие сходимости ( сумма коэффициентов при переменных, не принадлежащей главной диагонали <= 1 ) не выполняется
+               throw std::logic_error( "Checking the convergence condition failed" );
+          }
+     }
 }
 
 void Calculator::Calc()
@@ -508,17 +663,18 @@ void Calculator::Calc()
      while( !tmpRoots.empty() )
      {
           tmp = std::make_pair( 0, 0 );
-          size_t index = 0;
+          size_t n = 0;
           for( size_t i = 0; i < tmpRoots.size(); ++i )
           {
-               if(  std::fabs( NewRoot( i ) ) > tmp.second )
+               if( NewRoot( i ) > tmp.second )
                {
-                    tmp = tmpRoots[i].second;
-                    index = tmpRoots[i].first;
-                    tmpRoots.erase( tmpRoots.begin() + i );
+                    tmp.second = tmpRoots[i].second.second;
+                    tmp.first = tmpRoots[i].first;
+                    n = i;
                }
           }
-          outRoots.emplace_back( std::make_pair( index, tmp.second ) );
+          outRoots.emplace_back( tmp );
+          tmpRoots.erase( tmpRoots.begin() + n );
      }
      std::cout << "Number of iterations: " << n << std::endl;
 

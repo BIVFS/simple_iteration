@@ -44,8 +44,15 @@ public:
      /// @brief     Преобразование системы для решения методом простых итераций
      void TransformSystem();
 
+     //TODO
+
+     void TryFixOnePass( size_t i );
+     bool TryFixOnePass( std::vector<std::pair<size_t, float> > equation, size_t i );
+     void DutySwap( const size_t n );
+
      /// @brief     Деление всех уравнений системы так, чтобы при корнях главной диагонали коэффициенты были = 1.
      ///            Иначе говоря приведение системы к виду: x1 = a2x2 + a3x3...; x2 = a1x1 + a3x3...; x3 = ... и т.д.
+     ///            И проверка условия сходимости
      void DivisionSystem();
 
      /// @brief     Вычисление корней

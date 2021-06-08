@@ -44,10 +44,15 @@ public:
      /// @brief     Преобразование системы для решения методом простых итераций
      void TransformSystem();
 
-     //TODO
-
-     void TryFixOnePass( size_t i );
+     /// @brief     Попытка привести уравнение к условию главной диагонали
+     ///
+     /// param[in]  equation уравнение
+     /// param[in]  n номер уравнения в системе
      bool TryFixOnePass( std::vector<std::pair<size_t, float> > equation, size_t i );
+
+     //TODO
+     /// @brief     Грязная замена уравнения, которое привести не удается, на эквивалентное
+     /// @param[in] n номер уравнения
      void DutySwap( const size_t n );
 
      /// @brief     Деление всех уравнений системы так, чтобы при корнях главной диагонали коэффициенты были = 1.

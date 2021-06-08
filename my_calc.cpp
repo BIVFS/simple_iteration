@@ -59,7 +59,7 @@ float CalcSum( const std::vector<std::pair<size_t, float> >& equation, size_t n 
      float summ = 0;
      for( size_t j = 1; j < equation.size(); ++j )
      {
-          //TODO не n + 1, а в аргументе сразу +
+          // n + 1, т.к. константы при корнях записаны с 1 элемента, а не с 0
           if( j != n + 1 )
           {
                summ += std::fabs( equation[j].second );
@@ -106,14 +106,12 @@ Calculator::~Calculator()
 
 bool Calculator::Input()
 {
-     //TODO
+     //TODO тут отладка, чтобы не вводить руками, нужно закоментировать
      std::stringstream ss;
      ss
           << "10x1+2.5x2-4x3=20" << std::endl
           << "8x1-13x2+x3=8.33" << std::endl
-          << "7x1+10.5x2-3x3+4x4=15" << std::endl // должна быть такая исходня строка, но она ломает код, поэтому
-          //введена эквивалентная преобразованная
-          //<< "6.75x1+7x2+16x3=-4.1825" << std::endl
+          << "7x1+10.5x2-3x3+4x4=15" << std::endl // "6.75x1+7x2+16x3=-4.1825" на всякий случай оставил преобразованную строку
           << "2x1+0.1x3-7x4=-13.23" << std::endl
           ;
      std::string equation;
@@ -365,8 +363,8 @@ void Calculator::AddNullRoots()
 
 void Calculator::PrepareSystem()
 {
-     //TODO
-     // проверяем consts_[0] потому что матрица квадратная, но по хорошему надо проверять каждый
+     // Проверяем consts_[0] потому что матрица квадратная, но по хорошему надо проверять каждый
+     // Потому что тут необходимо идти по столбцам
      for( size_t j = 1; j < consts_[0].size(); ++j )
      {
           float maxConst = 0;
@@ -486,89 +484,6 @@ void Calculator::DutySwap( const size_t n )
      }
      system_[n]->swap( system[n] );
 }
-
-#if 0
-void Calculator::TransformSystem()
-{
-     for( size_t k = 0; k < system_.size(); ++k )
-     {
-          //TODO матрица квадратная, поэтому 0, но по хорошему опираться на конкретный
-          for( size_t i = 0; i < system_.size(); ++i )
-          {
-               double aimVar = system_[i]->at( k + 1 ).second;
-               if( 0 == system_[i]->at( k + 1 ).second )
-               {
-                    continue;
-               }
-               for( size_t j = 0; j < system_[i]->size(); ++j )
-               {
-                    if( i == k )
-                    {
-                         continue;
-                    }
-                    //std::cout << i << " " << k << " Xs " << system_[i]->at( k + 1 ).second << " " << system_[k]->at( k + 1 ).second << std::endl;
-                    //std::cout << "Old: " << system_[i]->at( j ).second << std::endl;
-                    if( 0 > aimVar && 0 > system_[k]->at( k + 1 ).second ) // 0 > aimVar * system_[k]->at( k + 1 ).second )
-                    {
-                         system_[i]->at( j ).second = system_[i]->at( j ).second
-                              + system_[k]->at( j ).second * aimVar / system_[k]->at( k + 1 ).second;
-                    }
-                    else
-                    {
-                         system_[i]->at( j ).second = system_[i]->at( j ).second
-                              - system_[k]->at( j ).second * aimVar / system_[k]->at( k + 1 ).second;
-                    }
-                    //std::cout << "New: " << system_[i]->at( j ).second << std::endl;
-               }
-          }
-          ShowSystem();
-          std::cout << std::endl;
-     }
-}
-#endif
-
-#if 0
-void Calculator::TransformSystem()
-{
-     for( size_t i = 0; i < system_.size(); ++i )
-     {
-          float summ = CalcSum( *system_[i], i );
-#if 0
-          for( size_t j = 1; j < system_[i]->size(); ++j )
-          {
-               if( j != i )
-               {
-                    summ += std::fabs( system_[i]->at( j ).second );
-               }
-          }
-#endif
-          if( std::fabs( system_[i]->at( i + 1 ).second ) >= summ )
-          {
-               continue;
-          }
-          do
-          {
-               int aim = 0;
-               std::cout << std::endl << i << std::endl;
-               std::cout << system_[i]->at( i + 1 ).second << " " << summ << std::endl;
-               bool positive = FindFor( i, aim );
-               std::cout << "Find: " << aim << std::endl;
-               if( positive )
-               {
-                    AdditionEquations( *system_[i], *system_[ std::abs( aim ) ] ).swap( *system_[i] );
-               }
-               else
-               {
-                    SubtractionEquations( *system_[i], *system_[ std::abs( aim ) ] ).swap( *system_[i] );
-               }
-               ShowEquation( *system_[i] );
-               summ = CalcSum( *system_[i], i );
-               std::cout << system_[i]->at( i + 1 ).second << " " << summ << std::endl;
-               std::this_thread::sleep_for( std::chrono::seconds( 1 ) );
-          } while( std::fabs( system_[i]->at( i + 1 ).second ) < summ );
-     }
-}
-#endif
 
 bool Calculator::FindFor( size_t n, int& num )
 {

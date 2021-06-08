@@ -106,7 +106,7 @@ Calculator::~Calculator()
 
 bool Calculator::Input()
 {
-     //TODO тут отладка, чтобы не вводить руками, нужно закоментировать
+     // Тут отладка, чтобы не вводить руками, нужно закоментировать
      std::stringstream ss;
      ss
           << "10x1+2.5x2-4x3=20" << std::endl
@@ -118,9 +118,8 @@ bool Calculator::Input()
      std::cout << "Enter the first equation in the format: A1X1 + A2X2 + A3X3 + ... + AnXn = C" << std::endl;
      while( true )
      {
-          //TODO
-          //getline( std::cin, equation );
-          getline( ss, equation );    // Отладка
+          getline( std::cin, equation );
+          //getline( ss, equation );    // Отладка, раскомментировать и закоммент-ть пред-ю строку
           if( equation.empty() )
           {
                break;
@@ -157,42 +156,54 @@ void Calculator::PrepareData()
 
 void Calculator::ShowEquation( const size_t& n )
 {
-     for( size_t i = 1; i < consts_[n].size(); ++i )
+     for( size_t j = 1; j < consts_[n].size(); ++j )
      {
-          if( 1 != i && consts_[n][i].second >= 0 )
+          // Снятие знакового нуля
+          if( 0 == consts_[n][j].second && std::signbit( consts_[n][j].second ) )
+          {
+               consts_[n][j].second = 0;
+          }
+
+          if( 1 != j && consts_[n][j].second >= 0 )
           {
                std::cout << "+";
           }
-          if( 1 != consts_[n][i].second && -1 != consts_[n][i].second )
+          if( 1 != consts_[n][j].second && -1 != consts_[n][j].second )
           {
-               std::cout << consts_[n][i].second;
+               std::cout << consts_[n][j].second;
           }
-          if( -1 == consts_[n][i].second )
+          if( -1 == consts_[n][j].second && 0 != consts_[n][j].second )
           {
                std::cout << "-";
           }
-          std::cout << 'x' << consts_[n][i].first;
+          std::cout << 'x' << consts_[n][j].first;
      }
      std::cout << "=" << consts_[n][0].second << std::endl;
 }
 
-void Calculator::ShowEquation( const std::vector<std::pair<size_t, float> >& equation )
+void Calculator::ShowEquation( std::vector<std::pair<size_t, float> >& equation )
 {
-     for( size_t i = 1; i < equation.size(); ++i )
+     for( size_t j = 1; j < equation.size(); ++j )
      {
-          if( 1 != i && equation[i].second >= 0 )
+          // Снятие знакового нуля
+          if( 0 == equation[j].second && std::signbit( equation[j].second ) )
+          {
+               equation[j].second = 0;
+          }
+
+          if( 1 != j && equation[j].second >= 0 )
           {
                std::cout << "+";
           }
-          if( 1 != equation[i].second && -1 != equation[i].second )
+          if( 1 != equation[j].second && -1 != equation[j].second )
           {
-               std::cout << equation[i].second;
+               std::cout << equation[j].second;
           }
-          if( -1 == equation[i].second )
+          if( -1 == equation[j].second )
           {
                std::cout << "-";
           }
-          std::cout << 'x' << equation[i].first;
+          std::cout << 'x' << equation[j].first;
      }
      std::cout << "=" << equation[0].second << std::endl;
 }

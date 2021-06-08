@@ -30,7 +30,7 @@ public:
 
      /// @brief     Печать уравнения по ссылке
      /// @param[in] Ссылка на уравнение
-     void ShowEquation( const std::vector<std::pair<size_t, float> >& equation );
+     void ShowEquation( std::vector<std::pair<size_t, float> >& equation );
 
      /// @brief     Печать всех уравнений системы (печатает из массива констант)
      void ShowEquations();
